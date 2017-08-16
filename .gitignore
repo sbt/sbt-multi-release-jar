@@ -1,0 +1,8 @@
+target
+example-project/jmh.out
+project/target
+.idea
+.idea_modules
+hs_err*
+*.iml
+*.jfr
