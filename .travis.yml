@@ -1,5 +1,31 @@
-sudo: false
+# JDK 9 build via https://github.com/reactive-streams/reactive-streams-jvm/pull/296/files 
+
+sudo: required
 language: scala
+
 script: sbt '; extras/publishLocal; project plugin; ^scripted'
-jdk:
- - oraclejdk8
+
+dist: trusty
+#group: edge
+
+matrix:
+  include:
+#    - jdk: oraclejdk8 # should then NOT compile any of the JDK 9 stuff
+    # From https://github.com/reactive-streams/reactive-streams-jvm/pull/383
+    - jdk: oraclejdk9 # JDK 9-ea+174 provided by Travis will be replaced by 9+177 in "before_install"
+      before_install:
+        - cd ~
+        - wget http://download.java.net/java/jdk9/archive/177/binaries/jdk-9+177_linux-x64_bin.tar.gz
+        - tar -xzf jdk-9+177_linux-x64_bin.tar.gz
+        - export JAVA_HOME=~/jdk-9
+        - PATH=$JAVA_HOME/bin:$PATH
+        - cd -
+
+env:
+  global:
+  - TERM=dumb
+  - DEFAULT_TIMEOUT_MILLIS=300
+  - DEFAULT_NO_SIGNALS_TIMEOUT_MILLIS=200
+  - PUBLISHER_REFERENCE_GC_TIMEOUT_MILLIS=300
+addons: # Fix OpenJDK build. Issue: https://github.com/travis-ci/travis-ci/issues/5227 & https://docs.travis-ci.com/user/hostname
+  hostname: mr-jar
