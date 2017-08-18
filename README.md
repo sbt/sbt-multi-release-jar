@@ -11,6 +11,11 @@ License
 
 This plugin is released under the **Apache 2.0 License**
 
+Maintainer
+----------
+
+This project is maintained by @ktoso (Akka team, Lightbend)
+
 Contributing
 ------------
 
