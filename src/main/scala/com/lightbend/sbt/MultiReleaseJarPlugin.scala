@@ -49,6 +49,8 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       ).value
     
   ) ++ inConfig(MultiReleaseJar)(Defaults.compileSettings ++ Seq(
+    
+    // default suffix for directories: java-jdk9, scala-jdk9
     jdkDirectorySuffix in MultiReleaseJar := "-jdk#",
     
     // here we want to generate the JDK9 files, so they target Java 9:
@@ -89,7 +91,9 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       val s9SourcesDir = (scala9Directory in MultiReleaseJar).value
       val s9Sources = (s9SourcesDir ** "*").filter(_.isFile).get.toSet
 
-      (j9Sources union s9Sources).toSeq
+      val j9Files = (j9Sources union s9Sources).toSeq
+      streams.value.log.debug("JDK9 Source files detected: " + j9Files)
+      j9Files
     },
     
     crossTarget in MultiReleaseJar := metaInfVersionsTargetDirectory.value,

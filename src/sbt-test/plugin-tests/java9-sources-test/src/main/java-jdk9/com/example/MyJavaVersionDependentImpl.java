@@ -1,10 +1,15 @@
 package com.example;
 
+import scala.Console;
+
 import java.io.File;
 import java.io.IOException;
 
 public class MyJavaVersionDependentImpl {
   public void print() throws IOException {
-    System.out.println("Class from `java9`, while running Java " + System.getProperty("java.version"));
+    System.out.println(
+      Console.GREEN() +
+        "Class from `java9`, while running Java " + System.getProperty("java.version") +
+        Console.RESET());
   }
 }

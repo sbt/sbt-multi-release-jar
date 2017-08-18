@@ -2,13 +2,16 @@
 
 > compile
 
+# --- assert generated files ---
 $ exists target/scala-2.12/classes/com/example/MainRunner.class
-$ absent ./target/scala-2.12/classes/META-INF/versions/9/com/example/MainRunner.class
+$ absent target/scala-2.12/classes/META-INF/versions/9/com/example/MainRunner.class
 
-$ exists target/scala-2.12/classes/com/example/MainRunner.class
+$ exists target/scala-2.12/classes/com/example/MyJavaVersionDependentImpl.class
 $ exists target/scala-2.12/classes/META-INF/versions/9/com/example/MyJavaVersionDependentImpl.class
 
 $ absent target/scala-2.12/classes/com/example/OnlyJDK9Subscriber.class
 $ exists target/scala-2.12/classes/META-INF/versions/9/com/example/OnlyJDK9Subscriber.class
 
 > runMain com.example.MainRunner
+
+> check
