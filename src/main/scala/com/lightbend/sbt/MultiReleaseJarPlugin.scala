@@ -38,17 +38,26 @@ object MultiReleaseJarPlugin extends AutoPlugin {
   override def projectSettings = Seq(
     
     compile := 
-      (compile in MultiReleaseJar)
-        .dependsOn(compile in Compile)
-        .value,
+      (compile in MultiReleaseJar).dependsOn(
+        compile in Compile
+      ).value,
     
     Keys.`package` :=
-      (Keys.`package` in Compile)
-      .dependsOn(compile in MultiReleaseJar)
-      .value
+      (Keys.`package` in Compile).dependsOn(
+        compile in Compile, 
+        compile in MultiReleaseJar
+      ).value
     
   ) ++ inConfig(MultiReleaseJar)(Defaults.compileSettings ++ Seq(
     jdkDirectorySuffix in MultiReleaseJar := "-jdk#",
+    
+    // here we want to generate the JDK9 files, so they target Java 9:
+    javacOptions in MultiReleaseJar ++= 
+      Seq("-source", "1.9", "-target", "1.9"),
+    // in Compile we want to generage Java 8 compatible things though: 
+    javacOptions in Compile ++= 
+      Seq("-source", "1.8", "-target", "1.8"), 
+      
     
     packageOptions in(Compile, packageBin) +=
       Package.ManifestAttributes("Multi-Release" -> "true"),
@@ -75,16 +84,12 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       val baseDir = (sourceDirectory in Compile).value
 
       val j9SourcesDir = (java9Directory in MultiReleaseJar).value
-      val j9Sources = (j9SourcesDir ** "*").filter(_.isFile).get.map(compareByInternalFilePath(baseDir)).toSet
-
-      val s9SourcesDir = (scala9Directory in MultiReleaseJar).value
-      val s9Sources = (s9SourcesDir ** "*").filter(_.isFile).get.map(compareByInternalFilePath(baseDir)).toSet
-
-      val all9Sources: Set[FileComparableByName] = 
-        j9Sources union s9Sources
+      val j9Sources = (j9SourcesDir ** "*").filter(_.isFile).get.toSet
       
-      // the outside world wants a plain File of course though:
-      all9Sources.map(_.file).toSeq
+      val s9SourcesDir = (scala9Directory in MultiReleaseJar).value
+      val s9Sources = (s9SourcesDir ** "*").filter(_.isFile).get.toSet
+
+      (j9Sources union s9Sources).toSeq
     },
     
     crossTarget in MultiReleaseJar := metaInfVersionsTargetDirectory.value,
