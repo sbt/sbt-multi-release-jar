@@ -2,8 +2,15 @@
 
 sudo: required
 language: scala
+scala:
+   - 2.12.2
+   
+script: sbt '; publishLocal; scripted'
 
-script: sbt '; publishLocal; ^scripted'
+cache:
+  directories:
+    - $HOME/.ivy2
+    - $HOME/.sbt
 
 dist: trusty
 #group: edge
@@ -28,4 +35,4 @@ env:
   - DEFAULT_NO_SIGNALS_TIMEOUT_MILLIS=200
   - PUBLISHER_REFERENCE_GC_TIMEOUT_MILLIS=300
 addons: # Fix OpenJDK build. Issue: https://github.com/travis-ci/travis-ci/issues/5227 & https://docs.travis-ci.com/user/hostname
-  hostname: mr-jar
+  ostname: mr-jar
