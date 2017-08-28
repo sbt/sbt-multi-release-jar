@@ -9,6 +9,7 @@ $ exists target/scala-2.12/classes/com/example/MainScalaRunner.class
 $ exists target/scala-2.12/classes/com/example/MainScalaRunner$.class
 $ exists target/scala-2.12/classes/com/example/MainScalaRunner$delayedInit$body.class
 
+# scala-jdk9
 # all files for the scala object must be present in the "9" directory
 $ absent target/scala-2.12/classes/META-INF/versions/9/com/example/MainScalaRunner.class
 $ absent target/scala-2.12/classes/META-INF/versions/9/com/example/MainScalaRunner$.class
@@ -17,7 +18,10 @@ $ absent target/scala-2.12/classes/META-INF/versions/9/com/example/MainScalaRunn
 $ exists target/scala-2.12/classes/com/example/MyJavaVersionDependentImpl.class
 $ exists target/scala-2.12/classes/META-INF/versions/9/com/example/MyJavaVersionDependentImpl.class
 
-$ absent target/scala-2.12/classes/com/example/OnlyJDK9Subscriber.class
-$ exists target/scala-2.12/classes/META-INF/versions/9/com/example/OnlyJDK9Subscriber.class
+# scala-jdk9
+$ absent target/scala-2.12/classes/com/example/JavaOnlyJDK9.class
+$ exists target/scala-2.12/classes/META-INF/versions/9/com/example/JavaOnlyJDK9.class
+
+# java-jdk9
 
 > check

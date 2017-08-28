@@ -2,7 +2,7 @@ package com.example
 
 import java.util.concurrent.Flow
 
-class OnlyJDK9Subscriber extends Flow.Subscriber[String] {
+class OnlyJDK9SubscriberInScala extends Flow.Subscriber[String] {
   override def onError(throwable: Throwable): Unit = ()
 
   override def onComplete(): Unit = ()
