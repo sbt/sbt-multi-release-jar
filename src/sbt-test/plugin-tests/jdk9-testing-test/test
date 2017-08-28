@@ -1,0 +1,7 @@
+> show test:sourceDirectories
+
+> inspect tree test:compile
+
+> test:compile
+
+> runMain com.example.ListAllClasses

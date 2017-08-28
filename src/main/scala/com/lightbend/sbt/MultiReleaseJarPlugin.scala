@@ -1,14 +1,14 @@
 package com.lightbend.sbt
 
-import sbt._
+import sbt.{ AutoPlugin, Def, PluginTrigger, Plugins, _ }
 import sbt.Keys._
 import sbt.plugins.JvmPlugin
-import sbt.{ AutoPlugin, Def, PluginTrigger, Plugins }
 
 object MultiReleaseJarPlugin extends AutoPlugin {
 
   object MultiReleaseJarKeys {
     val MultiReleaseJar = config("MultiReleaseJar") extend Compile
+    val MultiReleaseJarTest = config("MultiReleaseJarTest") extend Test
 
     val keepOnlyNeeded9MultiReleaseFiles = taskKey[Seq[File]]("Since the JDK9 task will compile 'everything' we need to remove some classes")
     
@@ -35,12 +35,39 @@ object MultiReleaseJarPlugin extends AutoPlugin {
   val MULTI_RELEASE_KEY = "Multi-Release"
   // ---------------------------------------
 
-  override def projectSettings = Seq(
-    
-    compile := 
+  def jdkVersion: String = System.getProperty("java.version")
+  
+  override def projectSettings: Seq[Def.Setting[_]] =
+    jdkVersion match {
+      case "9" =>
+        println(
+          scala.Console.BOLD + 
+            "[multi-release-jar plugin] Running using JDK9! " +
+            "Will include classes and tests that require JDK9." +
+            scala.Console.RESET)
+        jdk9ProjectSettings
+      case "1.8" | "8" => 
+        println(
+          scala.Console.BOLD + 
+            "[multi-release-jar plugin] Running using JDK 8, " +
+            "note that JDK9 classes and tests will not be included in compile/test runs." + 
+            scala.Console.RESET)
+        
+        Seq.empty
+      case _ => 
+        throw new IllegalStateException("Only JDK 8 or 9 is supported by this build, because of the mult-release-jar plugin.")
+    }
+  
+  def jdk9ProjectSettings: Seq[Def.Setting[_]] = Seq(
+    compile in Compile := 
       (compile in MultiReleaseJar).dependsOn(
         compile in Compile
       ).value,
+    
+//    test := 
+//      (test in MultiReleaseJarTest).dependsOn(
+//        test in Test
+//      ).value,
     
     Keys.`package` :=
       (Keys.`package` in Compile).dependsOn(
@@ -48,6 +75,29 @@ object MultiReleaseJarPlugin extends AutoPlugin {
         compile in MultiReleaseJar
       ).value
     
+  ) ++ Seq(
+    // ----    testing configuration     ----
+    sourceDirectories in Test ++= {
+      val suffix = (jdkDirectorySuffix in MultiReleaseJar).value.replace("#", "9")
+      Seq(
+        (sourceDirectory in Test).value / ("java" + suffix),
+        (sourceDirectory in Test).value / ("scala" + suffix)
+      )
+    }
+    
+//    , sources in MultiReleaseJarTest := {
+//      val suffix = (jdkDirectorySuffix in MultiReleaseJar).value.replace("#", "9")
+//      val j9TestDir = (sourceDirectory in Compile).value / ("java" + suffix)
+//      val j9TestSources = (j9TestDir  ** "*").filter(_.isFile).get.toSet
+//      
+//      val s9TestDir = (sourceDirectory in Compile).value / ("scala" + suffix)
+//      val s9TestSources = (s9TestDir  ** "*").filter(_.isFile).get.toSet
+//      
+//      val j9TestFiles = (j9TestSources union s9TestSources).toSeq
+//      streams.value.log.warn("JDK9 Test Source files detected: " + j9TestFiles)
+//      j9TestFiles
+//    }
+    // ---- end of testing configuration ---- 
   ) ++ inConfig(MultiReleaseJar)(Defaults.compileSettings ++ Seq(
     
     // default suffix for directories: java-jdk9, scala-jdk9
@@ -83,8 +133,6 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       (crossTarget in Compile).value / "classes" / "META-INF" / "versions" / "9",
     
     sources in MultiReleaseJar := {
-      val baseDir = (sourceDirectory in Compile).value
-
       val j9SourcesDir = (java9Directory in MultiReleaseJar).value
       val j9Sources = (j9SourcesDir ** "*").filter(_.isFile).get.toSet
       
