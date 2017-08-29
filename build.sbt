@@ -1,6 +1,3 @@
-//import bintray.Keys._
-import java.io.FileInputStream
-import java.util.Properties
 
 val commonSettings = Seq(
   organization := "com.lightbend.sbt",
@@ -34,7 +31,4 @@ publishTo := Some(Classpaths.sbtPluginReleases)
 publishMavenStyle := false
 
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html"))
-//bintrayPublishSettings
-//repository in bintray := "sbt-plugins"
-//bintrayOrganization in bintray := None
-
+bintrayRepository := "sbt-plugins"
