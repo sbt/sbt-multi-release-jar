@@ -1,4 +1,3 @@
-
 val commonSettings = Seq(
   organization := "com.lightbend.sbt",
 
@@ -12,23 +11,30 @@ val commonSettings = Seq(
   )
 )
 
+// ---------------------------------------------------------------------------------------------------------------------
 // sbt-scripted settings
-val myScriptedSettings = Seq(
+val scriptedSettings = Seq(
   scriptedLaunchOpts += s"-Dproject.version=${version.value}",
   scriptedBufferLog := false
 ) 
 
 // ---------------------------------------------------------------------------------------------------------------------
-
+// main settings 
 commonSettings
 
-myScriptedSettings
+scriptedSettings
 
 name := "sbt-multi-release-jar"
-    
+
+crossSbtVersions := Vector("0.13.16", "1.0.0")
+// ---------------------------------------------------------------------------------------------------------------------
+// publishing settings
+
 sbtPlugin := true
 publishTo := Some(Classpaths.sbtPluginReleases)
 publishMavenStyle := false
 
-licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.html"))
-bintrayRepository := "sbt-plugins"
+// bintray config
+bintrayOrganization := Some("sbt")
+bintrayRepository := "sbt-plugin-releases"
+bintrayPackage := "sbt-plugin-releases"
