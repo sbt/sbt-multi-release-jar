@@ -31,10 +31,10 @@ crossSbtVersions := Vector("0.13.16", "1.0.0")
 // publishing settings
 
 sbtPlugin := true
-publishTo := Some(Classpaths.sbtPluginReleases)
+//publishTo := Some(Classpaths.sbtPluginReleases) // THIS IS BAD IN THE CURRENT PLUGIN VERSION
 publishMavenStyle := false
 
 // bintray config
-bintrayOrganization := Some("sbt")
-bintrayRepository := "sbt-plugin-releases"
-bintrayPackage := "sbt-plugin-releases"
+bintrayOrganization := Some("ktosopl")
+bintrayRepository := "sbt-plugins"
+bintrayPackage := "sbt-multi-release-jar"
