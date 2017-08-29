@@ -5,7 +5,10 @@ language: scala
 scala:
    - 2.12.2
    
-script: sbt '; publishLocal; scripted'
+script: 
+  - sbt '; publishLocal; scripted'
+  - cd plugin-tester
+  - sbt -Dproject.version=$(cat ../version.sbt | awk '{print $5}' | sed 's/"//g') test 
 
 cache:
   directories:

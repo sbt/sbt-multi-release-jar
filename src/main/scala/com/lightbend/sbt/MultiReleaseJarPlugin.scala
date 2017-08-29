@@ -35,8 +35,29 @@ object MultiReleaseJarPlugin extends AutoPlugin {
   val MULTI_RELEASE_KEY = "Multi-Release"
   // ---------------------------------------
 
-  override def projectSettings = Seq(
+  val jdkVersion: String = System.getProperty("java.version")
+
+  override def projectSettings: Seq[Def.Setting[_]] =
+    if (jdkVersion startsWith "9") {
+      println(
+        scala.Console.BOLD +
+          "[multi-release-jar plugin] Running using JDK9! " +
+          "Will include classes and tests that require JDK9." +
+          scala.Console.RESET)
+      jdk9ProjectSettings
+    } else if (jdkVersion startsWith "1.8") {
+      println(
+        scala.Console.BOLD +
+          "[multi-release-jar plugin] Running using JDK 8, " +
+          "note that JDK9 classes and tests will not be included in compile/test runs." +
+          scala.Console.RESET)
+
+      Seq.empty
+    } else {
+        throw new IllegalStateException(s"Only JDK 8 or 9 is supported by this build, because of the mult-release-jar plugin. Detected version: ${jdkVersion}")
+    }
     
+  def jdk9ProjectSettings: Seq[Def.Setting[_]] = Seq(
     compile := 
       (compile in MultiReleaseJar).dependsOn(
         compile in Compile
@@ -47,6 +68,30 @@ object MultiReleaseJarPlugin extends AutoPlugin {
         compile in Compile, 
         compile in MultiReleaseJar
       ).value
+    
+  ) ++ Seq(
+    unmanagedSourceDirectories in Test ++= {
+      val suffix = (jdkDirectorySuffix in MultiReleaseJar).value.replace("#", "9")
+      Seq(
+        (sourceDirectory in Test).value / ("java" + suffix),
+        (sourceDirectory in Test).value / ("scala" + suffix)
+      )
+    },
+
+    // instead of changing unmanagedClasspath we override fullClasspath
+    // since we want to make sure the "java9" classes are FIRST on the classpath
+    // FIXME if possible I'd love to make this in one step, but could not figure out the right way (conversions fail)
+    fullClasspath in Test += (classDirectory in MultiReleaseJar).value,
+    fullClasspath in Test := {
+      val prev = (fullClasspath in Test).value
+      // move the "java9" classes FIRST, so they get picked up first in case of conflicts
+      val j9Classes = prev.find(_.toString contains "/versions/9").get
+      Seq(j9Classes) ++ prev.filterNot(_.toString contains "/versions/9")
+    }
+    
+//    fullClasspath in Test := {
+//      val prev = (fullClasspath in Test).value
+//    }
     
   ) ++ inConfig(MultiReleaseJar)(Defaults.compileSettings ++ Seq(
     
@@ -79,12 +124,9 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       (crossTarget in Compile).value / "classes" / "META-INF" / "versions" / "9"
     },
     
-    classDirectory in MultiReleaseJar := 
-      (crossTarget in Compile).value / "classes" / "META-INF" / "versions" / "9",
+    classDirectory in MultiReleaseJar := metaInfVersionsTargetDirectory.value,
     
     sources in MultiReleaseJar := {
-      val baseDir = (sourceDirectory in Compile).value
-
       val j9SourcesDir = (java9Directory in MultiReleaseJar).value
       val j9Sources = (j9SourcesDir ** "*").filter(_.isFile).get.toSet
       

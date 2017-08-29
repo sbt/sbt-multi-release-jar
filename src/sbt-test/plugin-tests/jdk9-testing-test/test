@@ -1,0 +1,5 @@
+# unable to make this pass as `scripted` test but it works in "normal" usage...
+# I think it has to do with the classloading being somewhat weird in scripted for 
+# some reason and they're loaded too early? Before I reorder the classpath entries... -- ktoso
+# help welcome on making this pass as scripted test - for now it's tested using the plugin-tester project 
+#>test
