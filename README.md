@@ -11,6 +11,10 @@ Note that this plugin is not building the jar itself, but just making sure to co
 Usage
 -----
 
+```
+addSbtPlugin("com.lightbend.sbt" % "sbt-multi-release-jar" % "0.5.1")
+```
+
 This plugin allows you to keep "Java 9 only" sources in:
 
 - `src/main/scala-jdk9` 
