@@ -14,7 +14,7 @@ object MultiReleaseJarPlugin extends AutoPlugin {
     val MultiReleaseJar = config("MultiReleaseJar") extend Compile
 
     val keepOnlyNeeded9MultiReleaseFiles = taskKey[Seq[File]]("Since the JDK9 task will compile 'everything' we need to remove some classes")
-    
+
     val jdkDirectorySuffix = settingKey[String]("The suffix added to src/main/java or src/main/java to form [scala-jdk9]. " +
       "The format should be '-jdk#' where # indicates where the version number will be injected. This is for future implementations to use JDK10 etc.")
     val java9Directory = settingKey[File]("Where the java9 sources are")
@@ -34,7 +34,7 @@ object MultiReleaseJarPlugin extends AutoPlugin {
   override def projectConfigurations = Seq(MultiReleaseJar)
 
   // ---------------------------------------
-  // This could be taken from`java.util.jar.Attributes.MULTI_RELEASE`, but we don't want to requirerunning on JDK9! 
+  // This could be taken from`java.util.jar.Attributes.MULTI_RELEASE`, but we don't want to requirerunning on JDK9!
   val MULTI_RELEASE_KEY = "Multi-Release"
   // ---------------------------------------
 
@@ -53,16 +53,16 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       jdk9ProjectSettings
     } else Seq.empty
   }
-    
+
   def jdk9ProjectSettings: Seq[Def.Setting[_]] = Seq(
-    compile := 
+    compile :=
       (compile in MultiReleaseJar).dependsOn(
         compile in Compile
       ).value,
-    
+
     Keys.`package` :=
       (Keys.`package` in Compile).dependsOn(
-        compile in Compile, 
+        compile in Compile,
         compile in MultiReleaseJar
       ).value,
     
@@ -75,7 +75,7 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       (Keys.publishLocal).dependsOn(
         compile in MultiReleaseJar
       ).value
-    
+
   ) ++ Seq(
     unmanagedSourceDirectories in Test ++= {
       val suffix = (jdkDirectorySuffix in MultiReleaseJar).value.replace("#", "9")
@@ -95,24 +95,24 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       val j9Classes = prev.find(_.toString contains "/versions/9").get
       Seq(j9Classes) ++ prev.filterNot(_.toString contains "/versions/9")
     }
-    
+
 //    fullClasspath in Test := {
 //      val prev = (fullClasspath in Test).value
 //    }
-    
+
   ) ++ inConfig(MultiReleaseJar)(Defaults.compileSettings ++ Seq(
-    
+
     // default suffix for directories: java-jdk9, scala-jdk9
     jdkDirectorySuffix in MultiReleaseJar := "-jdk#",
-    
+
     // here we want to generate the JDK9 files, so they target Java 9:
-    javacOptions in MultiReleaseJar ++= 
+    javacOptions in MultiReleaseJar ++=
       Seq("-source", "1.9", "-target", "1.9"),
-    // in Compile we want to generage Java 8 compatible things though: 
-    javacOptions in Compile ++= 
-      Seq("-source", "1.8", "-target", "1.8"), 
-      
-    
+    // in Compile we want to generage Java 8 compatible things though:
+    javacOptions in Compile ++=
+      Seq("-source", "1.8", "-target", "1.8"),
+
+
     packageOptions in(Compile, packageBin) +=
       Package.ManifestAttributes("Multi-Release" -> "true"),
 
@@ -130,13 +130,13 @@ object MultiReleaseJarPlugin extends AutoPlugin {
     metaInfVersionsTargetDirectory := {
       (crossTarget in Compile).value / "classes" / "META-INF" / "versions" / "9"
     },
-    
+
     classDirectory in MultiReleaseJar := metaInfVersionsTargetDirectory.value,
-    
+
     sources in MultiReleaseJar := {
       val j9SourcesDir = (java9Directory in MultiReleaseJar).value
       val j9Sources = (j9SourcesDir ** "*").filter(_.isFile).get.toSet
-      
+
       val s9SourcesDir = (scala9Directory in MultiReleaseJar).value
       val s9Sources = (s9SourcesDir ** "*").filter(_.isFile).get.toSet
 
@@ -144,33 +144,33 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       streams.value.log.debug("JDK9 Source files detected: " + j9Files)
       j9Files
     },
-    
+
     crossTarget in MultiReleaseJar := metaInfVersionsTargetDirectory.value,
     target in MultiReleaseJar := metaInfVersionsTargetDirectory.value
   ))
 
-  def compareByInternalFilePath(baseDir: File)(f: File): FileComparableByName = 
+  def compareByInternalFilePath(baseDir: File)(f: File): FileComparableByName =
     new FileComparableByName(baseDir, f)
-  
+
   final class FileComparableByName(baseDir: File, val file: File) {
     val internalPath = {
       val rel = file.relativeTo(baseDir).get.toString // `java-jdk9/com/example/MyJavaVersionDependentImpl.java`
       rel.substring(rel.indexOf('/') + 1) // just `com/example/MyJavaVersionDependentImpl.java`
     }
-    
+
     override def toString: String = {
-      val dir = file.relativeTo(baseDir).get.toString.takeWhile(_ != '/') 
+      val dir = file.relativeTo(baseDir).get.toString.takeWhile(_ != '/')
       s"[$dir] $internalPath"
     }
-    
+
     override def equals(other: Any): Boolean = other match {
       case that: FileComparableByName => internalPath == that.internalPath
       case _ => false
     }
-    
+
     override def hashCode(): Int = {
       val state = Seq(internalPath)
       state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
     }
-  } 
+  }
 }
