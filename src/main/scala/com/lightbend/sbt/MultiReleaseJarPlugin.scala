@@ -4,12 +4,9 @@ import sbt._
 import sbt.Keys._
 import sbt.plugins.JvmPlugin
 import sbt.{ AutoPlugin, Def, PluginTrigger, Plugins }
-import java.util.concurrent.atomic.AtomicBoolean
 
 object MultiReleaseJarPlugin extends AutoPlugin {
 
-  val GlobalAlreadyNotifiedThatJdk9ModeEnabledOnlyOnce = new AtomicBoolean(false)
-  
   object MultiReleaseJarKeys {
     val MultiReleaseJar = config("MultiReleaseJar") extend Compile
 
@@ -40,19 +37,22 @@ object MultiReleaseJarPlugin extends AutoPlugin {
 
   val jdkVersion: String = System.getProperty("java.version")
 
-  override def projectSettings: Seq[Def.Setting[_]] = {
-    val isJdk9 = 
-      if (jdkVersion startsWith "9") true
-      else if (jdkVersion startsWith "1.8") false
-    else throw new IllegalStateException(s"Only JDK 8 or 9 is supported by this build, because of the mult-release-jar plugin. Detected version: ${jdkVersion}")
-    
-    if (isJdk9) {
-      if (GlobalAlreadyNotifiedThatJdk9ModeEnabledOnlyOnce.compareAndSet(false, true)) 
-        println(scala.Console.GREEN + "[sbt-multi-release-jar] Using JDK9: Enabling {scala,java}-jdk9 directories and tests." + scala.Console.RESET)
-      
-      jdk9ProjectSettings
-    } else Seq.empty
+  private[this] val isJdk9 =
+    if (jdkVersion startsWith "9") true
+    else if (jdkVersion startsWith "1.8") false
+    else throw new IllegalStateException(s"Only JDK 8 or 9 is supported by this build, because of the mult-release-jar plugin. Detected version: $jdkVersion")
+
+  override def globalSettings = {
+    def log(s: String) =
+      println(scala.Console.BOLD + "[multi-release-jar plugin] " + s + scala.Console.RESET)
+    if (isJdk9)
+      log("Running using JDK9! Will include classes and tests that require JDK9.")
+    else
+      log("Running using JDK 8, note that JDK9 classes and tests will not be included in compile/test runs.")
+    super.globalSettings
   }
+
+  override def projectSettings: Seq[Def.Setting[_]] = if (isJdk9) jdk9ProjectSettings else Seq.empty
 
   def jdk9ProjectSettings: Seq[Def.Setting[_]] = Seq(
     compile :=
