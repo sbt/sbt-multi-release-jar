@@ -1,7 +1,7 @@
 val commonSettings = Seq(
   organization := "com.lightbend.sbt",
 
-  crossSbtVersions := Vector("0.13.16", "1.0.0"),
+  crossSbtVersions := Vector("0.13.16", "1.0.2"),
 
   scalacOptions ++= List(
     "-unchecked",
