@@ -46,11 +46,9 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       else if (jdkVersion startsWith "1.8") false
     else throw new IllegalStateException(s"Only JDK 8 or 9 is supported by this build, because of the mult-release-jar plugin. Detected version: ${jdkVersion}")
     
-    val usingScala212 = scalaVersion.value.toString.startsWith("2.12.")
-    
-    if (isJdk9 && usingScala212) {
+    if (isJdk9) {
       if (GlobalAlreadyNotifiedThatJdk9ModeEnabledOnlyOnce.compareAndSet(false, true)) 
-        println(scala.Console.GREEN + "[sbt-multi-release-jar] Using JDK9 and Scala 2.12.x: Enabling {scala,java}-jdk9 directories and tests." + scala.Console.RESET)
+        println(scala.Console.GREEN + "[sbt-multi-release-jar] Using JDK9: Enabling {scala,java}-jdk9 directories and tests." + scala.Console.RESET)
       
       jdk9ProjectSettings
     } else Seq.empty
@@ -65,6 +63,16 @@ object MultiReleaseJarPlugin extends AutoPlugin {
     Keys.`package` :=
       (Keys.`package` in Compile).dependsOn(
         compile in Compile, 
+        compile in MultiReleaseJar
+      ).value,
+    
+    Keys.publish :=
+      (Keys.publish).dependsOn(
+        compile in MultiReleaseJar
+      ).value,
+    
+    Keys.publishLocal :=
+      (Keys.publishLocal).dependsOn(
         compile in MultiReleaseJar
       ).value
     
