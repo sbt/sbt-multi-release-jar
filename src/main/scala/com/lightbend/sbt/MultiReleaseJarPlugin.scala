@@ -143,10 +143,7 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       val j9Files = (j9Sources union s9Sources).toSeq
       streams.value.log.debug("JDK9 Source files detected: " + j9Files)
       j9Files
-    },
-
-    crossTarget in MultiReleaseJar := metaInfVersionsTargetDirectory.value,
-    target in MultiReleaseJar := metaInfVersionsTargetDirectory.value
+    }
   ))
 
   def compareByInternalFilePath(baseDir: File)(f: File): FileComparableByName =
