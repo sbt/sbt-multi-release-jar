@@ -128,7 +128,7 @@ object MultiReleaseJarPlugin extends AutoPlugin {
 
     // target - we kind of 'inject' our sources into the right spot:
     metaInfVersionsTargetDirectory := {
-      (crossTarget in Compile).value / "classes" / "META-INF" / "versions" / "9"
+      (classDirectory in Compile).value / "META-INF" / "versions" / "9"
     },
 
     classDirectory in MultiReleaseJar := metaInfVersionsTargetDirectory.value,
