@@ -26,7 +26,6 @@ scriptedSettings
 
 name := "sbt-multi-release-jar"
 
-crossSbtVersions := Vector("0.13.16", "1.0.0")
 // ---------------------------------------------------------------------------------------------------------------------
 // publishing settings
 
