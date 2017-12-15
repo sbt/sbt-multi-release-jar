@@ -12,7 +12,7 @@ Usage
 -----
 
 ```
-addSbtPlugin("com.lightbend.sbt" % "sbt-multi-release-jar" % "0.1.0")
+addSbtPlugin("com.lightbend.sbt" % "sbt-multi-release-jar" % "0.1.2")
 ```
 
 This plugin allows you to keep "Java 9 only" sources in:
