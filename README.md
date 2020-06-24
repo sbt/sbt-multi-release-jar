@@ -6,7 +6,7 @@ sbt-multi-release-jar
 
 
 Provides support for [JEP 238: Multi-Release JAR Files](http://openjdk.java.net/jeps/238).
-Note that this plugin is not building the jar itself, but just making sure to compile using the right JDK version files which live under `src/[test|main]/[java|scala]-jdk9`. The packaging into a JAR you can still us eyour favourite plugin of choice, such as sbt-assembly or others.
+Note that this plugin is not building the jar itself, but just making sure to compile using the right JDK version files which live under `src/[test|main]/[java|scala]-jdk9`. The packaging into a JAR you can still use your favourite plugin of choice, such as sbt-assembly or others.
 
 Usage
 -----
@@ -55,7 +55,7 @@ This project is maintained by Konrad [@ktoso](https://github.com/ktoso) Malawski
 Contributing
 ------------
 
-Yes, pull requests and opening issues is very welcome!
+Yes, pull requests and opening issues are very welcome!
 
 Please test your changes using `sbt scripted`.
 
