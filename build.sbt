@@ -1,7 +1,7 @@
 val commonSettings = Seq(
   organization := "com.lightbend.sbt",
 
-  crossSbtVersions := Vector("0.13.16", "1.0.2"),
+  crossSbtVersions := Vector("0.13.16", "1.2.8"),
 
   scalacOptions ++= List(
     "-unchecked",
@@ -30,6 +30,7 @@ name := "sbt-multi-release-jar"
 // publishing settings
 
 sbtPlugin := true
+enablePlugins(SbtPlugin)
 //publishTo := Some(Classpaths.sbtPluginReleases) // THIS IS BAD IN THE CURRENT PLUGIN VERSION
 publishMavenStyle := false
 
