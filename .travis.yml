@@ -1,4 +1,4 @@
-# JDK 9 build via https://github.com/reactive-streams/reactive-streams-jvm/pull/296/files 
+# JDK 11 build via https://github.com/reactive-streams/reactive-streams-jvm/pull/296/files
 
 sudo: required
 language: scala
@@ -20,8 +20,8 @@ dist: trusty
 
 matrix:
   include:
-#    - jdk: oraclejdk8 # should then NOT compile any of the JDK 9 stuff
-    - jdk: oraclejdk9
+#    - jdk: oraclejdk8 # should then NOT compile any of the JDK 11 stuff
+    - jdk: oraclejdk11
 
 env:
   global:

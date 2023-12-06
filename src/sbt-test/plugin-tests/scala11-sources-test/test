@@ -1,0 +1,27 @@
+> plugins 
+
+> compile
+
+> runMain com.example.MainScalaRunner
+
+# --- assert generated files ---
+$ exists target/scala-2.12/classes/com/example/MainScalaRunner.class
+$ exists target/scala-2.12/classes/com/example/MainScalaRunner$.class
+$ exists target/scala-2.12/classes/com/example/MainScalaRunner$delayedInit$body.class
+
+# scala-jdk11
+# all files for the scala object must be present in the "11" directory
+$ absent target/scala-2.12/classes/META-INF/versions/11/com/example/MainScalaRunner.class
+$ absent target/scala-2.12/classes/META-INF/versions/11/com/example/MainScalaRunner$.class
+$ absent target/scala-2.12/classes/META-INF/versions/11/com/example/MainScalaRunner$delayedInit$body.class.class
+
+$ exists target/scala-2.12/classes/com/example/MyJavaVersionDependentImpl.class
+$ exists target/scala-2.12/classes/META-INF/versions/11/com/example/MyJavaVersionDependentImpl.class
+
+# scala-jdk11
+$ absent target/scala-2.12/classes/com/example/JavaOnlyJDK11.class
+$ exists target/scala-2.12/classes/META-INF/versions/11/com/example/JavaOnlyJDK11.class
+
+# java-jdk11
+
+> check
