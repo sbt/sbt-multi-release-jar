@@ -1,11 +1,11 @@
 val commonSettings = Seq(
   organization := "com.lightbend.sbt",
-
   scalacOptions ++= List(
     "-unchecked",
     "-deprecation",
     "-language:_",
-    "-encoding", "UTF-8"
+    "-encoding",
+    "UTF-8"
   )
 )
 
@@ -14,10 +14,10 @@ val commonSettings = Seq(
 val scriptedSettings = Seq(
   scriptedLaunchOpts += s"-Dproject.version=${version.value}",
   scriptedBufferLog := false
-) 
+)
 
 // ---------------------------------------------------------------------------------------------------------------------
-// main settings 
+// main settings
 commonSettings
 
 scriptedSettings
@@ -34,8 +34,8 @@ publishMavenStyle := false
 
 // bintray config
 bintrayOrganization := Some("ktosopl")
-bintrayRepository := "sbt-plugins"
-bintrayPackage := "sbt-multi-release-jar"
+bintrayRepository   := "sbt-plugins"
+bintrayPackage      := "sbt-multi-release-jar"
 
 ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("11"))
 
