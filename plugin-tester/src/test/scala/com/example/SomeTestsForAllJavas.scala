@@ -10,5 +10,5 @@ class SomeTestsForAllJavas extends WordSpec with Matchers {
       // do nothing
     }
   }
-  
+
 }

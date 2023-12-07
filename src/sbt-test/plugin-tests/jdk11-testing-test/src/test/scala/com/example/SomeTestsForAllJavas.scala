@@ -11,5 +11,5 @@ class SomeTestsForAllJavas extends WordSpec with Matchers {
       info(s"Running on [Java ${impl.running}]")
     }
   }
-  
+
 }
