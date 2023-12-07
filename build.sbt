@@ -1,8 +1,6 @@
 val commonSettings = Seq(
   organization := "com.lightbend.sbt",
 
-  crossSbtVersions := Vector("0.13.16", "1.2.8"),
-
   scalacOptions ++= List(
     "-unchecked",
     "-deprecation",
@@ -38,3 +36,11 @@ publishMavenStyle := false
 bintrayOrganization := Some("ktosopl")
 bintrayRepository := "sbt-plugins"
 bintrayPackage := "sbt-multi-release-jar"
+
+ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("11"))
+
+ThisBuild / githubWorkflowBuild := Seq(
+  WorkflowStep.Sbt(name = Some("Build project"), commands = List("test", "scripted"))
+)
+
+ThisBuild / githubWorkflowPublishTargetBranches := Seq() // Disable publishing for now
