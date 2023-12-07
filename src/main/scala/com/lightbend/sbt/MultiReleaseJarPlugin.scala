@@ -36,7 +36,7 @@ object MultiReleaseJarPlugin extends AutoPlugin {
   override def projectConfigurations = Seq(MultiReleaseJar)
 
   // ---------------------------------------
-  // This could be taken from`java.util.jar.Attributes.MULTI_RELEASE`, but we don't want to requirerunning on JDK11!
+  // This could be taken from`java.util.jar.Attributes.MULTI_RELEASE`, but we don't want to require running on JDK11!
   val MULTI_RELEASE_KEY = "Multi-Release"
   // ---------------------------------------
 
@@ -47,7 +47,7 @@ object MultiReleaseJarPlugin extends AutoPlugin {
     else if (jdkVersion startsWith "1.8") false
     else
       throw new IllegalStateException(
-        s"Only JDK 8 or 11 is supported by this build, because of the mult-release-jar plugin. Detected version: $jdkVersion"
+        s"Only JDK 8 or 11 is supported by this build, because of the multi-release-jar plugin. Detected version: $jdkVersion"
       )
 
   override def globalSettings = {
@@ -120,7 +120,7 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       // here we want to generate the JDK11 files, so they target Java 11:
       MultiReleaseJar / javacOptions ++=
         Seq("-source", "11", "-target", "11"),
-      // in Compile we want to generage Java 8 compatible things though:
+      // in Compile we want to generate Java 8 compatible things though:
       Compile / javacOptions ++=
         Seq("-source", "1.8", "-target", "1.8"),
       (Compile / packageBin) / packageOptions +=
