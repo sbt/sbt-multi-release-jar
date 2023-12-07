@@ -32,11 +32,6 @@ enablePlugins(SbtPlugin)
 //publishTo := Some(Classpaths.sbtPluginReleases) // THIS IS BAD IN THE CURRENT PLUGIN VERSION
 publishMavenStyle := false
 
-// bintray config
-bintrayOrganization := Some("ktosopl")
-bintrayRepository   := "sbt-plugins"
-bintrayPackage      := "sbt-multi-release-jar"
-
 ThisBuild / githubWorkflowJavaVersions := List(JavaSpec.temurin("11"))
 
 ThisBuild / githubWorkflowBuild := Seq(
