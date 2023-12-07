@@ -64,88 +64,88 @@ object MultiReleaseJarPlugin extends AutoPlugin {
 
   def jdk11ProjectSettings: Seq[Def.Setting[_]] = Seq(
     compile :=
-      (compile in MultiReleaseJar)
+      (MultiReleaseJar / compile)
         .dependsOn(
-          compile in Compile
+          Compile / compile
         )
         .value,
     Keys.`package` :=
-      (Keys.`package` in Compile)
+      (Compile / Keys.`package`)
         .dependsOn(
-          compile in Compile,
-          compile in MultiReleaseJar
+          Compile / compile,
+          MultiReleaseJar / compile
         )
         .value,
     Keys.publish :=
       Keys.publish
         .dependsOn(
-          compile in MultiReleaseJar
+          MultiReleaseJar / compile
         )
         .value,
     Keys.publishLocal :=
       Keys.publishLocal
         .dependsOn(
-          compile in MultiReleaseJar
+          MultiReleaseJar / compile
         )
         .value
   ) ++ Seq(
-    unmanagedSourceDirectories in Test ++= {
-      val suffix = (jdkDirectorySuffix in MultiReleaseJar).value.replace("#", "11")
+    Test / unmanagedSourceDirectories ++= {
+      val suffix = (MultiReleaseJar / jdkDirectorySuffix).value.replace("#", "11")
       Seq(
-        (sourceDirectory in Test).value / ("java" + suffix),
-        (sourceDirectory in Test).value / ("scala" + suffix)
+        (Test / sourceDirectory).value / ("java" + suffix),
+        (Test / sourceDirectory).value / ("scala" + suffix)
       )
     },
 
     // instead of changing unmanagedClasspath we override fullClasspath
     // since we want to make sure the "java11" classes are FIRST on the classpath
     // FIXME if possible I'd love to make this in one step, but could not figure out the right way (conversions fail)
-    fullClasspath in Test += (classDirectory in MultiReleaseJar).value,
-    fullClasspath in Test := {
-      val prev = (fullClasspath in Test).value
+    Test / fullClasspath += (MultiReleaseJar / classDirectory).value,
+    Test / fullClasspath := {
+      val prev = (Test / fullClasspath).value
       // move the "java11" classes FIRST, so they get picked up first in case of conflicts
       val j11Classes = prev.find(_.toString contains "/versions/11").get
       Seq(j11Classes) ++ prev.filterNot(_.toString contains "/versions/11")
     }
 
-//    fullClasspath in Test := {
-//      val prev = (fullClasspath in Test).value
+//    Test / fullClasspath := {
+//      val prev = (Test / fullClasspath).value
 //    }
 
   ) ++ inConfig(MultiReleaseJar)(
     Defaults.compileSettings ++ Seq(
       // default suffix for directories: java-jdk11, scala-jdk11
-      jdkDirectorySuffix in MultiReleaseJar := "-jdk#",
+      MultiReleaseJar / jdkDirectorySuffix := "-jdk#",
 
       // here we want to generate the JDK11 files, so they target Java 11:
-      javacOptions in MultiReleaseJar ++=
+      MultiReleaseJar / javacOptions ++=
         Seq("-source", "11", "-target", "11"),
       // in Compile we want to generage Java 8 compatible things though:
-      javacOptions in Compile ++=
+      Compile / javacOptions ++=
         Seq("-source", "1.8", "-target", "1.8"),
-      packageOptions in (Compile, packageBin) +=
+      (Compile / packageBin) / packageOptions +=
         Package.ManifestAttributes("Multi-Release" -> "true"),
 
       // "11" source directories
-      java11Directory in MultiReleaseJar := {
-        val suffix = (jdkDirectorySuffix in MultiReleaseJar).value.replace("#", "11")
-        (sourceDirectory in Compile).value / ("java" + suffix)
+      MultiReleaseJar / java11Directory := {
+        val suffix = (MultiReleaseJar / jdkDirectorySuffix).value.replace("#", "11")
+        (Compile / sourceDirectory).value / ("java" + suffix)
       },
-      scala11Directory in MultiReleaseJar := {
-        val suffix = (jdkDirectorySuffix in MultiReleaseJar).value.replace("#", "11")
-        (sourceDirectory in Compile).value / ("scala" + suffix)
+      MultiReleaseJar / scala11Directory := {
+        val suffix = (MultiReleaseJar / jdkDirectorySuffix).value.replace("#", "11")
+        (Compile / sourceDirectory).value / ("scala" + suffix)
       },
 
       // target - we kind of 'inject' our sources into the right spot:
       metaInfVersionsTargetDirectory := {
-        (classDirectory in Compile).value / "META-INF" / "versions" / "11"
+        (Compile / classDirectory).value / "META-INF" / "versions" / "11"
       },
-      classDirectory in MultiReleaseJar := metaInfVersionsTargetDirectory.value,
-      sources in MultiReleaseJar := {
-        val j11SourcesDir = (java11Directory in MultiReleaseJar).value
+      MultiReleaseJar / classDirectory := metaInfVersionsTargetDirectory.value,
+      MultiReleaseJar / sources := {
+        val j11SourcesDir = (MultiReleaseJar / java11Directory).value
         val j11Sources    = (j11SourcesDir ** "*").filter(_.isFile).get.toSet
 
-        val s11SourcesDir = (scala11Directory in MultiReleaseJar).value
+        val s11SourcesDir = (MultiReleaseJar / scala11Directory).value
         val s11Sources    = (s11SourcesDir ** "*").filter(_.isFile).get.toSet
 
         val j11Files = (j11Sources union s11Sources).toSeq
