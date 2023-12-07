@@ -1,9 +1,7 @@
 sbt-multi-release-jar
 =====================
 
- [ ![Download](https://api.bintray.com/packages/ktosopl/sbt-plugins/sbt-multi-release-jar/images/download.svg) ](https://bintray.com/ktosopl/sbt-plugins/sbt-multi-release-jar/_latestVersion)
- [![Build Status](https://travis-ci.org/sbt/sbt-multi-release-jar.svg?branch=master)](https://travis-ci.org/sbt/sbt-multi-release-jar)
-
+ [![Continuous Integration](https://github.com/sbt/sbt-multi-release-jar/actions/workflows/ci.yml/badge.svg)](https://github.com/sbt/sbt-multi-release-jar/actions/workflows/ci.yml)
 
 Provides support for [JEP 238: Multi-Release JAR Files](http://openjdk.java.net/jeps/238).
 Note that this plugin is not building the jar itself, but just making sure to compile using the right JDK version files which live under `src/[test|main]/[java|scala]-jdk11`. The packaging into a JAR you can still use your favourite plugin of choice, such as sbt-assembly or others.
