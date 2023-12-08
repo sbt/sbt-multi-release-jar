@@ -45,10 +45,11 @@ simply load the "normal class" from the root of the JAR.
 This summarises the main use-case of Multi-Release JARs, however feel free to read more in the 
 [JEP 238: Multi-Release JAR Files](http://openjdk.java.net/jeps/238).
 
-Maintainer
-----------
+Credits
+-------
 
-This project is maintained by Konrad [@ktoso](https://github.com/ktoso) Malawski (Akka team, Lightbend)
+sbt-multi-release-jar was originally developed by Konrad [@ktoso](https://github.com/ktoso) Malawski,
+and currently maintained by volunteer [sbt-multi-release-jar team](https://github.com/orgs/sbt/teams/sbt-multi-release-jar).
 
 Contributing
 ------------
