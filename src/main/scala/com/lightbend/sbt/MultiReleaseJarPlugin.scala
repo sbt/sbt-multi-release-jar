@@ -1,9 +1,10 @@
 package com.lightbend.sbt
 
-import sbt._
-import sbt.Keys._
+import sbt.*
+import sbt.Keys.*
 import sbt.plugins.JvmPlugin
 import sbt.{AutoPlugin, Def, PluginTrigger, Plugins}
+import xsbti.VirtualFile
 
 object MultiReleaseJarPlugin extends AutoPlugin {
 
@@ -17,12 +18,17 @@ object MultiReleaseJarPlugin extends AutoPlugin {
       "The suffix added to src/main/java or src/main/java to form [scala-jdk11]. " +
         "The format should be '-jdk#' where # indicates where the version number will be injected."
     )
-    val java11Directory  = settingKey[File]("Where the java11 sources are")
-    val scala11Directory = settingKey[File]("Where the scala11 sources are")
-    val metaInfVersionsTargetDirectory = settingKey[File](
-      "Where the java11 classes should be written to." +
-        "Usually this is: ./target/scala-2.12/classes/META-INF/versions/11"
-    )
+    val jdkJavaDirectories  = settingKey[Map[Int, File]]("Where the java multi-release sources are")
+    val jdkScalaDirectories = settingKey[Map[Int, File]]("Where the java multi-release sources are")
+
+    // These are new sbt settings that are required because original sbt settings are in-adequate, i.e.
+    // we now need multiple class directories since we are dealing with multiple jdk versions
+    val jdkClassDirectories = settingKey[Map[Int, File]]("Map of jdk versions to class directories ")
+    val jdkJavacOptions     = settingKey[Map[Int, Seq[String]]]("Map of jdk versions to their respective javac options")
+    val jdkBackendOutputs   = settingKey[Map[Int, VirtualFile]]("")
+
+    val detectedMultiReleaseVersions =
+      settingKey[Set[Int]]("Contains all of the detected multi-release jdk versions")
   }
 
   import MultiReleaseJarKeys._
@@ -60,9 +66,41 @@ object MultiReleaseJarPlugin extends AutoPlugin {
     super.globalSettings
   }
 
-  override def projectSettings: Seq[Def.Setting[_]] = if (isJdk11) jdk11ProjectSettings else Seq.empty
+  override def projectSettings: Seq[Def.Setting[_]] = if (isJdk11) jdkProjectSettings else Seq.empty
 
-  def jdk11ProjectSettings: Seq[Def.Setting[_]] = Seq(
+  private def extractMultiJdkSourceDirs(mainSourceDirectory: File,
+                                        sourceFolder: File,
+                                        suffix: String
+  ): Map[Int, File] = {
+    val nestedDirs = IO.listFiles(mainSourceDirectory, (pathname: File) => pathname.isDirectory).toSet
+
+    // Remove the currently existing sources
+    val withoutScalaAndJava = nestedDirs.filterNot(nestedDir => nestedDir != sourceFolder)
+
+    val jdkSuffixAsRegex     = suffix.replace("#", """(\d)+""")
+    val sourceFolderJdkRegex = (sourceFolder.getName ++ jdkSuffixAsRegex).r
+
+    withoutScalaAndJava
+      .map { file =>
+        file.getName match {
+          case sourceFolderJdkRegex(jdkVersion) => Some(jdkVersion.toInt -> file)
+          case _                                => None
+        }
+      }
+      .collect { case Some(value) =>
+        value
+      }
+      .toMap
+  }
+
+  private def extractSourcesFromMultiJdkDir(jdkVersionWithDir: Map[Int, File], tpe: String, log: Logger): Set[File] =
+    jdkVersionWithDir.flatMap { case (jdkVersion, dir) =>
+      val sources = (dir ** "*").filter(_.isFile).get().toSet
+      log.debug(s"$tpe JDK$jdkVersion Source files detected: " + sources)
+      sources
+    }.toSet
+
+  def jdkProjectSettings: Seq[Def.Setting[_]] = Seq(
     compile :=
       (MultiReleaseJar / compile)
         .dependsOn(
@@ -90,69 +128,97 @@ object MultiReleaseJarPlugin extends AutoPlugin {
         .value
   ) ++ Seq(
     Test / unmanagedSourceDirectories ++= {
-      val suffix = (MultiReleaseJar / jdkDirectorySuffix).value.replace("#", "11")
-      Seq(
-        (Test / sourceDirectory).value / ("java" + suffix),
-        (Test / sourceDirectory).value / ("scala" + suffix)
-      )
+      detectedMultiReleaseVersions.value.flatMap { jdkVersion =>
+        val suffix = (MultiReleaseJar / jdkDirectorySuffix).value.replace("#", jdkVersion.toString)
+        Seq(
+          (Test / sourceDirectory).value / ("java" + suffix),
+          (Test / sourceDirectory).value / ("scala" + suffix)
+        )
+      }.toList
     },
 
     // instead of changing unmanagedClasspath we override fullClasspath
     // since we want to make sure the "java11" classes are FIRST on the classpath
     // FIXME if possible I'd love to make this in one step, but could not figure out the right way (conversions fail)
-    Test / fullClasspath += (MultiReleaseJar / classDirectory).value,
+    Test / fullClasspath ++= (MultiReleaseJar / jdkClassDirectories).value.values.toList.sorted,
     Test / fullClasspath := {
       val prev = (Test / fullClasspath).value
-      // move the "java11" classes FIRST, so they get picked up first in case of conflicts
-      val j11Classes = prev.find(_.toString contains "/versions/11").get
-      Seq(j11Classes) ++ prev.filterNot(_.toString contains "/versions/11")
-    }
-
-//    Test / fullClasspath := {
-//      val prev = (Test / fullClasspath).value
-//    }
-
-  ) ++ inConfig(MultiReleaseJar)(
-    Defaults.compileSettings ++ Seq(
-      // default suffix for directories: java-jdk11, scala-jdk11
-      MultiReleaseJar / jdkDirectorySuffix := "-jdk#",
-
-      // here we want to generate the JDK11 files, so they target Java 11:
-      MultiReleaseJar / javacOptions ++=
-        Seq("-source", "11", "-target", "11"),
-      // in Compile we want to generate Java 8 compatible things though:
-      Compile / javacOptions ++=
-        Seq("-source", "1.8", "-target", "1.8"),
-      (Compile / packageBin) / packageOptions +=
-        Package.ManifestAttributes("Multi-Release" -> "true"),
-
-      // "11" source directories
-      MultiReleaseJar / java11Directory := {
-        val suffix = (MultiReleaseJar / jdkDirectorySuffix).value.replace("#", "11")
-        (Compile / sourceDirectory).value / ("java" + suffix)
-      },
-      MultiReleaseJar / scala11Directory := {
-        val suffix = (MultiReleaseJar / jdkDirectorySuffix).value.replace("#", "11")
-        (Compile / sourceDirectory).value / ("scala" + suffix)
-      },
-
-      // target - we kind of 'inject' our sources into the right spot:
-      metaInfVersionsTargetDirectory := {
-        (Compile / classDirectory).value / "META-INF" / "versions" / "11"
-      },
-      MultiReleaseJar / classDirectory := metaInfVersionsTargetDirectory.value,
-      MultiReleaseJar / sources := {
-        val j11SourcesDir = (MultiReleaseJar / java11Directory).value
-        val j11Sources    = (j11SourcesDir ** "*").filter(_.isFile).get.toSet
-
-        val s11SourcesDir = (MultiReleaseJar / scala11Directory).value
-        val s11Sources    = (s11SourcesDir ** "*").filter(_.isFile).get.toSet
-
-        val j11Files = (j11Sources union s11Sources).toSeq
-        streams.value.log.debug("JDK11 Source files detected: " + j11Files)
-        j11Files
+      // move the "jdk multi-release" classes FIRST, so they get picked up first in case of conflicts
+      detectedMultiReleaseVersions.value.toList.sorted.flatMap { jdkVersion =>
+        val javaClasses = prev.find(_.toString contains s"/versions/$jdkVersion").get
+        Seq(javaClasses) ++ prev.filterNot(_.toString contains s"/versions/$jdkVersion")
       }
-    )
+    }
+  ) ++ inConfig(MultiReleaseJar)(
+    (Defaults.compileSettings diff
+      // Just to be safe, lets not initialize these sbt settings since multi-release-jar has its own versions
+      // and we don't want to accidentally have differing behaviour
+      Seq(classDirectory, backendOutput, javacOptions))
+      ++ Seq(
+        // default suffix for directories: e.g. java-jdk11, scala-jdk11
+        MultiReleaseJar / jdkDirectorySuffix := "-jdk#",
+
+        // here we want to generate the multi release jdk files, so they target Java JDK version:
+        MultiReleaseJar / jdkJavacOptions ++= {
+          detectedMultiReleaseVersions.value.map { jdkVersion =>
+            val jdkArg =
+              if (jdkVersion == 8)
+                "1.8"
+              else
+                jdkVersion.toString
+            jdkVersion -> Seq("-source", jdkArg, "-target", jdkArg)
+          }.toMap
+        },
+        jdkBackendOutputs := {
+          val converter = fileConverter.value
+          (MultiReleaseJar / jdkClassDirectories).value.map { case (jdkVersion, dir) =>
+            jdkVersion -> (converter.toVirtualFile(dir.toPath))
+          }
+        },
+        (Compile / packageBin) / packageOptions +=
+          Package.ManifestAttributes("Multi-Release" -> "true"),
+
+        // multi release source directories
+        MultiReleaseJar / jdkJavaDirectories := extractMultiJdkSourceDirs((Compile / sourceDirectory).value,
+                                                                          (Compile / javaSource).value,
+                                                                          (MultiReleaseJar / jdkDirectorySuffix).value
+        ),
+        MultiReleaseJar / jdkScalaDirectories := extractMultiJdkSourceDirs((Compile / sourceDirectory).value,
+                                                                           (Compile / scalaSource).value,
+                                                                           (MultiReleaseJar / jdkDirectorySuffix).value
+        ),
+        MultiReleaseJar / detectedMultiReleaseVersions := {
+          (MultiReleaseJar / jdkJavaDirectories).value.keySet ++ (MultiReleaseJar / jdkScalaDirectories).value.keySet
+        },
+        // target - we kind of 'inject' our sources into the right spot:
+        MultiReleaseJar / jdkClassDirectories := {
+          (MultiReleaseJar / detectedMultiReleaseVersions).value.map { jdkVersion =>
+            jdkVersion -> (Compile / classDirectory).value / "META-INF" / "versions" / jdkVersion.toString
+          }.toMap
+        },
+        MultiReleaseJar / sources := {
+          val log         = streams.value.log
+          val javaSources = extractSourcesFromMultiJdkDir((MultiReleaseJar / jdkJavaDirectories).value, "Java", log)
+          val scalaSources =
+            extractSourcesFromMultiJdkDir((MultiReleaseJar / jdkScalaDirectories).value, "Scala", log)
+
+          (javaSources union scalaSources).toSeq
+        },
+        MultiReleaseJar / productDirectories := {
+          (MultiReleaseJar / jdkClassDirectories).value.values.toList
+        },
+        MultiReleaseJar / tastyFiles := Def.taskIf {
+          if (ScalaArtifacts.isScala3(scalaVersion.value)) {
+            val _ = (MultiReleaseJar / compile).value
+            val tastyFiles = (MultiReleaseJar / jdkClassDirectories).value.values
+              .flatMap(
+                _.**("*.tasty").get
+              )
+              .toSeq
+            tastyFiles.map(_.getAbsoluteFile)
+          } else Nil
+        }.value
+      )
   )
 
   def compareByInternalFilePath(baseDir: File)(f: File): FileComparableByName =
